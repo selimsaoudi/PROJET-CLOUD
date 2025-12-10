@@ -58,8 +58,9 @@ The whole system is **dockerized** and orchestrated via **`docker-compose`**.
 ## 3. Project Structure
 
 Projet Cloud S3/
-  docker-compose.yml
-  README.md
+
+docker-compose.yml
+README.md
 
   sensor_gen/
     main.py
@@ -79,4 +80,5 @@ Projet Cloud S3/
   admin_api/
     main.py
     requirements.txt
+
     Dockerfile
