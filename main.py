@@ -1,40 +1,48 @@
-# admin_api/main.py
+# ingest_api/main.py
 from fastapi import FastAPI
-import psycopg2
+from pydantic import BaseModel
+from kafka import KafkaProducer
+import json
 import os
+import time
 
-DB_HOST = os.getenv("DB_HOST", "db")
-DB_NAME = os.getenv("DB_NAME", "monitoring")
-DB_USER = os.getenv("DB_USER", "app_user")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "app_password")
+KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP", "kafka:19092")
+TOPIC = os.getenv("KAFKA_TOPIC", "temperatures")
 
 app = FastAPI()
 
-def get_conn():
-    return psycopg2.connect(
-        host=DB_HOST,
-        dbname=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD,
-    )
 
-@app.get("/measurements")
-def get_measurements(limit: int = 100):
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute(
-        "SELECT sensor_id, temperature, ts "
-        "FROM measurements ORDER BY ts DESC LIMIT %s",
-        (limit,)
-    )
-    rows = cur.fetchall()
-    conn.close()
-    return [
-        {"sensor_id": r[0], "temperature": float(r[1]), "timestamp": r[2].isoformat()}
-        for r in rows
-    ]
+class Measurement(BaseModel):
+    sensor_id: str
+    temperature: float
+    timestamp: str
 
 
+def get_producer():
+    """Create a Kafka producer with a few retries."""
+    last_exc = None
+    for _ in range(5):
+        try:
+            print(f"Trying to connect producer to {KAFKA_BOOTSTRAP} ...")
+            p = KafkaProducer(
+                bootstrap_servers=KAFKA_BOOTSTRAP,
+                value_serializer=lambda v: json.dumps(v).encode("utf-8"),
+            )
+            print("Producer connected.")
+            return p
+        except Exception as e:
+            last_exc = e
+            print("Kafka not ready yet (producer), retrying in 2s...", e)
+            time.sleep(2)
+    raise last_exc
 
-####################
-####################### API admin qui lit la base SQL
+
+@app.post("/measurements")
+def receive_measurement(m: Measurement):
+    producer = get_producer()
+    producer.send(TOPIC, m.dict())
+    producer.flush()
+    return {"status": "ok"}
+
+#################
+##################  API HTTP + producer Kafka
