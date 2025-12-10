@@ -60,26 +60,23 @@ The whole system is **dockerized** and orchestrated via **`docker-compose`**.
 Projet Cloud S3/
 
 docker-compose.yml  
-README.md
-
+README.md  
   sensor_gen/
     main.py
     requirements.txt
     Dockerfile
-
   ingest_api/
     main.py
     requirements.txt
     Dockerfile
-
   measurement_saver/
     main.py
     requirements.txt
     Dockerfile
-
   admin_api/
     main.py
     requirements.txt
 
     Dockerfile
+
 
