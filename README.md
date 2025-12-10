@@ -64,19 +64,18 @@ README.md
   sensor_gen/
     main.py
     requirements.txt
-    Dockerfile
+    Dockerfile  
   ingest_api/
     main.py
     requirements.txt
-    Dockerfile
+    Dockerfile  
   measurement_saver/
     main.py
     requirements.txt
-    Dockerfile
+    Dockerfile  
   admin_api/
     main.py
     requirements.txt
-
     Dockerfile
 
 
