@@ -1,81 +1,35 @@
-# Cloud Project – Sensor Monitoring Pipeline
+# Projet Cloud S3
 
-This project implements the architecture described in class (components **1 → 2 → Kafka → 3 → SQL → 4**) using **Python**, **Docker**, **Kafka** and **PostgreSQL**.
+## 1. Objectif
 
-The goal is to **understand how information flows between cloud components**:
+Mettre en place une architecture cloud simple pour comprendre les **flux d’informations entre composants** :
 
-1. A generator sends HTTP requests  
-2. An API ingests and forwards messages to a message broker (Kafka)  
-3. A background service consumes messages and writes them to a SQL database  
-4. An admin API reads from the database and exposes the data
-
----
-
-## 1. Architecture Overview
-
-**Use case:** monitoring temperature sensors.
-
-- **(1) `sensor_gen`**  
-  Simulates a physical sensor and periodically sends temperature measurements via HTTP `POST` to the ingestion API.
-
-- **(2) `ingest_api` (FastAPI)**  
-  - Exposes `POST /measurements`  
-  - Receives JSON payloads from `sensor_gen`  
-  - Acts as a **Kafka producer** and publishes each measurement to the topic `temperatures`
-
-- **Kafka + Zookeeper (Confluent images)**  
-  - Kafka acts as a **message broker** between ingestion and persistence  
-  - Zookeeper is required by Kafka for coordination
-
-- **(3) `measurement_saver`**  
-  - Kafka **consumer** on the `temperatures` topic  
-  - For each message, inserts a row into the SQL table `measurements` in PostgreSQL
-
-- **PostgreSQL (`cloud_db`)**  
-  - Stores all measurements in a relational table
-
-- **(4) `admin_api` (FastAPI)**  
-  - Exposes `GET /measurements?limit=N`  
-  - Reads from PostgreSQL and returns recent measurements as JSON for an admin / dashboard
-
-The whole system is **dockerized** and orchestrated via **`docker-compose`**.
+1. Génération de données (simulateur de capteur)
+2. API d’ingestion HTTP
+3. Message broker (Kafka)
+4. Service de persistance (Postgres)
+5. API d’administration
 
 ---
 
-## 2. Technologies
+## 2. Architecture
 
-- **Python 3.11**
-  - FastAPI (HTTP APIs)
-  - `kafka-python` (Kafka producer / consumer)
-  - `psycopg2-binary` (PostgreSQL client)
-  - `requests` (HTTP client in `sensor_gen`)
-- **Docker / Docker Compose**
-- **Kafka + Zookeeper** (Confluent images)
-- **PostgreSQL 16**
+Flux principal :
 
----
+`sensor_gen  →  ingest_api (HTTP)  →  Kafka (topic "temperatures")  →  measurement_saver  →  PostgreSQL  →  admin_api`
 
-## 3. Project Structure
+Composants :
 
-Projet Cloud S3/
+- **sensor_gen** : script Python qui simule un capteur de température et envoie des requêtes `POST` régulières.
+- **ingest_api** : API FastAPI qui reçoit les mesures et joue le rôle de **producteur Kafka**.
+- **Kafka + Zookeeper** : broker de messages (images Confluent).
+- **measurement_saver** : service Python **consumer Kafka**, qui insère les messages dans la base SQL.
+- **PostgreSQL** : base de données relationnelle avec la table :
 
-docker-compose.yml  
-README.md  
-  sensor_gen/
-    main.py
-    requirements.txt
-    Dockerfile  
-  ingest_api/
-    main.py
-    requirements.txt
-    Dockerfile  
-  measurement_saver/
-    main.py
-    requirements.txt
-    Dockerfile  
-  admin_api/
-    main.py
-    requirements.txt
-    Dockerfile
-
-
+  ```sql
+  CREATE TABLE measurements (
+      id SERIAL PRIMARY KEY,
+      sensor_id VARCHAR(50) NOT NULL,
+      temperature NUMERIC(5,2) NOT NULL,
+      ts TIMESTAMPTZ NOT NULL
+  );
