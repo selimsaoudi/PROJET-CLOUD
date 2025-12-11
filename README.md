@@ -1,3 +1,6 @@
+
+Présentation intéractive* : https://cloud-stream-architect.lovable.app/
+
 ### 1. Contexte du projet
 
 Dans le cadre du cours *Cloud & Data Engineering*, l’objectif du projet est de mettre en pratique les notions vues en cours : architecture client–serveur, pattern producer–consumer via un message broker, persistance des données, virtualisation et portabilité avec Docker et Docker-Compose.
@@ -70,3 +73,4 @@ Grâce à Docker-Compose, l’architecture complète peut être démarrée avec 
 ```bash
 docker compose up -d --build
 ```
+
